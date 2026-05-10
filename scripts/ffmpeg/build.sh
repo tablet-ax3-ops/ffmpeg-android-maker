@@ -1,38 +1,34 @@
 #!/usr/bin/env bash
 
-# --- 1. OTTIMIZZAZIONI ARCHITETTURA (Focus su ARM NEON) ---
+# --- 1. Ottimizzazioni per Architettura (ARM NEON) ---
 case $ANDROID_ABI in
-  x86)
-    EXTRA_BUILD_CONFIGURATION_FLAGS="$EXTRA_BUILD_CONFIGURATION_FLAGS --disable-asm"
-    ;;
-  x86_64)
-    EXTRA_BUILD_CONFIGURATION_FLAGS="$EXTRA_BUILD_CONFIGURATION_FLAGS --x86asmexe=${NASM_EXECUTABLE}"
-    ;;
   armeabi-v7a)
-    # Forza NEON e ottimizzazioni per CPU a 32bit (VFPv3 è il minimo per performance decenti)
+    # Supporto NEON per vecchi tablet 32-bit
     EXTRA_BUILD_CONFIGURATION_FLAGS="$EXTRA_BUILD_CONFIGURATION_FLAGS --enable-asm --enable-inline-asm --enable-neon"
     EXTRA_CFLAGS="-mfloat-abi=softfp -mfpu=neon"
     ;;
   arm64-v8a)
-    # 64-bit: NEON è standard, ma abilitiamo l'ottimizzazione specifica per i registri estesi
+    # NEON è standard su 64-bit, ma forziamo l'ottimizzazione ASM
     EXTRA_BUILD_CONFIGURATION_FLAGS="$EXTRA_BUILD_CONFIGURATION_FLAGS --enable-asm --enable-inline-asm --enable-neon"
     ;;
 esac
 
-# --- 2. CONFIGURAZIONE DEI COMPONENTI (Massima Dieta) ---
-# Disabilitiamo tutto e riaccendiamo solo il bisturi per GoPro
+# --- 2. Configurazione "Chirurgica" (Solo HEVC GoPro) ---
+# --disable-everything spegne già TUTTO (avdevice, postproc, avfilter, ecc.)
 ADDITIONAL_COMPONENTS="--disable-everything \
   --enable-decoder=hevc \
   --enable-parser=hevc \
   --enable-demuxer=mov,mp4,hevc \
   --enable-protocol=file,pipe"
 
-# --- 3. PARAMETRI DI COMPILAZIONE ---
+# --- 3. Flags di Compilazione Estrema ---
+# -O3: Massima ottimizzazione del compilatore
+# -flto: Link Time Optimization (rende il binario più veloce e piccolo)
+# -ffast-math: Velocizza i calcoli matematici della decodifica
 DEP_CFLAGS="-I${BUILD_DIR_EXTERNAL}/${ANDROID_ABI}/include"
 DEP_LD_FLAGS="-L${BUILD_DIR_EXTERNAL}/${ANDROID_ABI}/lib $FFMPEG_EXTRA_LD_FLAGS"
 EXTRA_LDFLAGS="-Wl,-z,max-page-size=16384 $DEP_LD_FLAGS"
 
-# Lancio della configurazione
 ./configure \
   --prefix=${BUILD_DIR_FFMPEG}/${ANDROID_ABI} \
   --enable-cross-compile \
@@ -55,12 +51,6 @@ EXTRA_LDFLAGS="-Wl,-z,max-page-size=16384 $DEP_LD_FLAGS"
   --disable-static \
   --disable-debug \
   --disable-doc \
-  --disable-programs \
-  --disable-avdevice \
-  --disable-postproc \
-  --disable-avfilter \
-  --disable-network \
-  --disable-vulkan \
   \
   --enable-pthreads \
   --enable-optimizations \
@@ -71,7 +61,7 @@ EXTRA_LDFLAGS="-Wl,-z,max-page-size=16384 $DEP_LD_FLAGS"
   ${EXTRA_BUILD_CONFIGURATION_FLAGS} \
   --pkg-config=${PKG_CONFIG_EXECUTABLE} || exit 1
 
-# Compilazione parallela sfruttando tutti i core della macchina (GitHub Actions ne ha solitamente 2 o 4)
 ${MAKE_EXECUTABLE} clean
 ${MAKE_EXECUTABLE} -j${HOST_NPROC}
 ${MAKE_EXECUTABLE} install
+
