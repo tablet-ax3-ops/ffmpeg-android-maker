@@ -1,0 +1,47 @@
+name: Build FFmpeg GoPro (Optimized)
+
+on:
+  # Avvio automatico disabilitato (commentato)
+  # push:
+  #   branches: [ master, main ]
+  # pull_request:
+  #   branches: [ master, main ]
+  
+  # Avvio MANUALE abilitato
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for arm64-v8a
+    runs-on: ubuntu-24.04
+
+    steps:
+      # 1. Clonazione del tuo repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Installazione dipendenze necessarie per la compilazione C/ASM
+      - name: Setup environment
+        run: |
+          sudo apt update
+          sudo apt install -y meson nasm ninja-build build-essential pkg-config
+
+      # 3. Esecuzione dello script di compilazione
+      # Usiamo l'NDK preinstallato nelle macchine GitHub per massima compatibilità
+      - name: Execute FFmpeg Build
+        run: |
+          export ANDROID_SDK_HOME=$ANDROID_HOME
+          export ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME
+          
+          # Lanciamo lo script solo per l'architettura che ci interessa
+          # -android=24 è una buona base per tablet moderni
+          ./ffmpeg-android-maker.sh -android=24 -abis=arm64-v8a
+
+      # 4. Salvataggio dei file compilati (.so e header .h)
+      - name: Upload Binaries Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-gopro-arm64-v8a
+          path: output/
+          if-no-files-found: error # Fallisce se la compilazione non ha prodotto nulla
+          
