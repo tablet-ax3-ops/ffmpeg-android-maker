@@ -51,7 +51,6 @@ EXTRA_LDFLAGS="-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384 $DEP_LD_
   --enable-pthreads \
   --enable-optimizations \
   --enable-hardcoded-tables \
-  --disable-runtime-cpudetect \
   ${ADDITIONAL_COMPONENTS} \
   ${EXTRA_BUILD_CONFIGURATION_FLAGS} \
   --pkg-config="${PKG_CONFIG_EXECUTABLE}"
