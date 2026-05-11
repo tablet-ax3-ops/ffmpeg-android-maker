@@ -29,7 +29,7 @@ jobs:
         run: |
           export ANDROID_SDK_HOME=$ANDROID_HOME
           export ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME
-          ./ffmpeg-android-maker.sh -android=24 -abis=arm64-v8a
+          ./ffmpeg-android-maker.sh -android=33 -abis=arm64-v8a
 
       # Generiamo un nome per il tag basato sulla data attuale
       - name: Generate Release Tag
