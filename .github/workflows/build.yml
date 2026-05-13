@@ -58,3 +58,11 @@ jobs:
           files: ffmpeg-gopro-android.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      # 4. Crea il file ffmpeg-version.txt e fai il commit nel repository
+      - name: Update Version File in Repo
+        run: |
+          # 1. Scrivi il tag nel file (sovrascrive se esiste)
+          echo "${{ steps.tag.outputs.release_tag }}" > ffmpeg-version.txt
+          
