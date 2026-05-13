@@ -35,7 +35,11 @@ jobs:
       - name: Generate Release Tag
         id: tag
         run: echo "release_tag=v$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_OUTPUT
-
+      
+      # Crea il version file ffmpeg-version.txt
+      - name: Create Version File
+        run: echo "${{ steps.tag.outputs.release_tag }}" > ffmpeg-version.txt
+      
       # Comprimiamo l'output in uno zip per la release
       - name: Archive Output
         run: |
